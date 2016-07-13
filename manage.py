@@ -25,28 +25,25 @@ def createdb():
 
 @manager.command
 def populatedb():
-    '''Populate db with list of tumblrs in '''
-
-    # open the list of blogs
-    blogs = yaml.load(open("blogs.yml"))
-
-    tags = {}
+	'''Populate db with list of tumblrs in '''
+	# open the list of blogs
+	blogs = yaml.load(open("blogs.yml"))
+	tags = {}
 	avoid_tags = ["porn","gif","sex","sexe","xxx","scene","pr0n","fuck","huge"]
-    tumblr_key = Gm7u68GMu8RCQmIVV1vmr7QlToZ8rYKrzr1HsULlmK0doez73o
-    # iterate through blogs
-    for blog_url in blogs_file:
-
-    	# get the total_posts
-    	blog_json_url = "https://api.tumblr.com/v2/blog/"+blog_url+"/posts/photo?api_key="+tumblr_key
-    	response = urllib2.urlopen(blog_json_url)
+	tumblr_key = Gm7u68GMu8RCQmIVV1vmr7QlToZ8rYKrzr1HsULlmK0doez73o
+	# iterate through blogs
+	for blog_url in blogs_file:
+		# get the total_posts
+		blog_json_url = "https://api.tumblr.com/v2/blog/"+blog_url+"/posts/photo?api_key="+tumblr_key
+		response = urllib2.urlopen(blog_json_url)
 		data = json.load(response) 
 		total_posts = data["response"]["total_posts"]
 
-    	# iterate from 0 to total_posts by 50
-    	blog_json_url+="&limit="
-    	for i in range(0,total_posts,50):
-    		# get the json
-    		response = urllib2.urlopen(blog_json_url+i)
+		# iterate from 0 to total_posts by 50
+		blog_json_url+="&limit="
+		for i in range(0,total_posts,50):
+			# get the json
+			response = urllib2.urlopen(blog_json_url+i)
 			data = json.load(response)
 	    	# iterate through json
 	    	if data["meta"]["status"] is 200:
