@@ -18,11 +18,11 @@ def get_user(id):
 
 @api.route('/users', methods=['POST'])
 def signup_user():
-	datas = request.get_json()
+    datas = request.get_json()
     username = datas.get('username','')
     password = datas.get('password','').encode('utf-8')
     user = User.query.get(username)
-	m = sha512()
+    m = sha512()
     m.update(f.password.data.encode())
     password = m.hexdigest()
     pass
@@ -30,11 +30,11 @@ def signup_user():
 
 @api.route('/users', methods=['PUT'])
 def login_user():
-	datas = request.get_json()
+    datas = request.get_json()
     username = datas.get('username','')
     password = datas.get('password','').encode('utf-8')
     user = User.query.get(username)
-	m = sha512()
+    m = sha512()
     m.update(f.password.data.encode())
     password = m.hexdigest()
     pass
