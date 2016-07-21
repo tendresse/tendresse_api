@@ -12,6 +12,7 @@ from app.models.tag import Tag
 from app import create_app, db
 
 app = create_app(os.getenv('APP_CONFIG', 'default'))
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 manager = Manager(app)
 
 @manager.shell
@@ -35,7 +36,7 @@ def populatedb():
     time_start_global = time.time()
     blogs = yaml.load(open("blogs.yml"))
     known_tags = {}
-    avoided_tags = ["sexy","fucking","porn","gif","sex","sexe","xxx","scene","pr0n","fuck","huge","porno","gifs","pornstar","erotic","nsfw","naughty","horny","hot"]
+    avoided_tags = ["the","sexy","fucking","porn","gif","sex","sexe","xxx","scene","pr0n","fuck","huge","porno","gifs","pornstar","erotic","nsfw","naughty","horny","hot","a","an"]
     tumblr_key = 'Gm7u68GMu8RCQmIVV1vmr7QlToZ8rYKrzr1HsULlmK0doez73o'
     http = urllib3.PoolManager()
     for blog_url in blogs:
@@ -74,11 +75,32 @@ def populatedb():
                                                         gif.tags.append(known_tags[tag])
                                 db.session.commit()
             time_end_blog = time.time()
-            print("took : "+str(time_end_blog-time_start_blog)+" seconds for "+total_posts+" gifs.")
+            print("took : "+str(time_end_blog-time_start_blog)+" seconds for "+str(total_posts)+" gifs.")
         else:
-            print("... tumblr is offline").
+            print("... tumblr is offline")
     time_end_global = time.time()
     print("populatedb took : "+str(time_end_global-time_start_global)+" seconds.")
+
+
+@manager.command
+def populatedbfromfile(filename):
+    '''Populate db with gifs/tags from yaml file'''
+    gifs = yaml.load(open(filename))
+    avoided_tags = ["the","sexy","fucking","porn","gif","sex","sexe","xxx","scene","pr0n","fuck","huge","porno","gifs","pornstar","erotic","nsfw","naughty","horny","hot","a","an"]
+    for gif in blogs:
+        g = Gif(url=gif["url"])
+        db.session.add(gif)
+        for tag in gif["tags"]:
+            if tag not in avoided_tags:
+                t = Tag.query.get(tag)
+                if t is None:
+                    o = Tag(name=tag)
+                    db.session.add(o)
+                    db.session.commit()
+                    g.tags.append(o)
+                else:
+                    g.tags.append(t)
+        db.session.commit()
 
 
 if __name__ == '__main__':
