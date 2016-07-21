@@ -1,6 +1,4 @@
 from .. import db
-from . import user, gif
-
 
 class Tendresse(db.Model):
 

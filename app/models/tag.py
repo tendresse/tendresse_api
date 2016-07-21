@@ -1,10 +1,15 @@
 from .. import db
+from  sqlalchemy.sql.expression import func
 
 
 class Tag(db.Model):
 
-    name = db.Column(db.String, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, unique=True)
     # Additional fields
 
     def __repr__(self):
         return 'Tag {}>'.format(self.id)
+
+def get_random_tag():
+    return db.session.query(Tag).order_by(func.random()).first()

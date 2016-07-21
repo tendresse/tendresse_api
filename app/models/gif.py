@@ -1,11 +1,12 @@
 from .. import db
-from . import user
+from .tag import Tag, get_random_tag
+import random
 
 gifwithtags = db.Table('gifwithtags',
                       db.Column('gif_id', db.Integer, db.ForeignKey(
                           'gif.id'), primary_key=True),
-                      db.Column('tag_name', db.String, db.ForeignKey(
-                          'tag.name'), primary_key=True)
+                      db.Column('tag_id', db.String, db.ForeignKey(
+                          'tag.id'), primary_key=True)
                       )
 
 class Gif(db.Model):
@@ -16,9 +17,12 @@ class Gif(db.Model):
     tags = db.relationship(
         "Tag",
         secondary=gifwithtags,
-        backref=db.backref("gifs ", lazy="dynamic")
+        backref=db.backref("gifs", lazy="dynamic")
     )
     lame_score = db.Column(db.Integer, default=0)
 
     def __repr__(self):
         return 'Gif {}>'.format(self.id)
+
+def get_random_gif():
+    return get_random_tag().gifs[0]
