@@ -5,7 +5,8 @@ from ..models.user import User
 class UserSchema(ma.ModelSchema):
 
     class Meta:
-        model = User
+        fields = ("id", "username", "achievements")
+        exclude = ("password", "friends", "devices")
 
 
 user_schema = UserSchema()
