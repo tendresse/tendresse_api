@@ -1,6 +1,8 @@
 from .. import db
 from hashlib import sha512
 from . import token, gif, success, tendresse
+from itsdangerous import (TimedJSONWebSignatureSerializer
+                          as Serializer, BadSignature, SignatureExpired)
 
 
 userwithuser = db.Table('userwithuser',
@@ -23,7 +25,7 @@ class User(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     # Additional fields
-    username = db.Column(db.String, nullable=False)
+    username = db.Column(db.String, nullable=False, unique=True)
     password = db.Column(db.String, nullable=True)
     friends = db.relationship('User',
                                secondary=userwithuser,
@@ -36,10 +38,27 @@ class User(db.Model):
                                     secondary=userwithsuccess,
                                     backref=db.backref("users", lazy="dynamic")
     )
-    tokens = db.relationship("Token",
+    devices = db.relationship("Device",
                               backref=db.backref('user', lazy='joined')
     )
+    token = db.Column(db.String)
 
+    def generate_auth_token(self, expiration = 3600):
+        s = Serializer(app.config['SECRET_KEY'], expires_in = expiration)
+        return s.dumps({ 'id': self.id })
+
+    @staticmethod
+    def verify_auth_token(token):
+        s = Serializer(app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except SignatureExpired:
+            return None # valid token, but expired
+        except BadSignature:
+            return None # invalid token
+        user = User.query.get(data['id'])
+        
+        return user
 
     def __repr__(self):
         return 'User {}>'.format(self.id)

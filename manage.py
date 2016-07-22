@@ -87,9 +87,9 @@ def populatedbfromfile(filename):
     '''Populate db with gifs/tags from yaml file'''
     gifs = yaml.load(open(filename))
     avoided_tags = ["the","sexy","fucking","porn","gif","sex","sexe","xxx","scene","pr0n","fuck","huge","porno","gifs","pornstar","erotic","nsfw","naughty","horny","hot","a","an"]
-    for gif in blogs:
+    for gif in gifs:
         g = Gif(url=gif["url"])
-        db.session.add(gif)
+        db.session.add(g)
         for tag in gif["tags"]:
             if tag not in avoided_tags:
                 t = Tag.query.get(tag)
@@ -101,7 +101,7 @@ def populatedbfromfile(filename):
                 else:
                     g.tags.append(t)
         db.session.commit()
-
+        
 
 if __name__ == '__main__':
     manager.run()

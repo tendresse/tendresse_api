@@ -10,4 +10,4 @@ from . import gif
 from . import success
 from . import user
 from . import tag
-from . import token
+from . import device

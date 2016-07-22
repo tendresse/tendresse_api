@@ -1,10 +1,12 @@
 import os
+import uuid
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config(object):
     DEBUG = False
     TESTING = False
+    SECRET_KEY = os.environ.get('SECRET_KEY',uuid.uuid4())
 
 
 class ProductionConfig(Config):
