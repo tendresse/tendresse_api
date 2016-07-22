@@ -1,8 +1,9 @@
-from .. import db
 from hashlib import sha512
-from . import token, gif, success, tendresse
+from flask import current_app
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
+from . import device, gif, success, tendresse
+from .. import db
 
 
 userwithuser = db.Table('userwithuser',
@@ -43,12 +44,12 @@ class User(db.Model):
     )
 
     def generate_auth_token(self, expiration = 172800):
-        s = Serializer(app.config['SECRET_KEY'], expires_in = expiration)
+        s = Serializer(current_app.config.get('SECRET_KEY'), expires_in = expiration)
         return s.dumps({ 'id': self.id })
 
     @staticmethod
     def get_user_by_token(token):
-        s = Serializer(app.config['SECRET_KEY'])
+        s = Serializer(current_app.config.get('SECRET_KEY'), expires_in = 172800)
         try:
             data = s.loads(token)
         except SignatureExpired:

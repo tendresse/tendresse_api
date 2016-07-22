@@ -1,9 +1,13 @@
-from flask import jsonify, request
+from flask import jsonify, request, current_app
+from hashlib import sha512
 
 from . import api
 from .. import db
 from ..models.user import User
+from ..models.device import Device
 from ..schemas.user import user_schema, users_schema
+from ..models.success import Success
+from ..schemas.success import success_schema, successes_schema
 
 
 
@@ -47,7 +51,7 @@ def signup_user():
                     u.devices.append(d)
                     db.session.commit()
                     token = u.generate_auth_token()
-                    return jsonify(token=token,username=username),200
+                    return jsonify(token=token.decode('ascii'),username=username),200
                 else:
                     # invalid password
                     return jsonify(login="password incorrect"),401
@@ -76,7 +80,7 @@ def login_user():
                 password = m.hexdigest()
                 if password == me.password:
                     token = me.generate_auth_token()
-                    return jsonify(token=token,username=username),200
+                    return jsonify(token=token.decode('ascii'),username=username),200
                 else:
                     return jsonify(login="password invalid"),403
             else:
@@ -95,13 +99,14 @@ def login_user():
 def disconnect_user():
     pass
 
-@api.route('/users/me/reset_token', methods=['GET'])
+@api.route('/users/me/reset_token', methods=['PUT'])
 def reset_token_user():
+    datas = request.get_json()
     token = datas.get('token','')
     me = User.get_user_by_token(token)
     if me:
         token = me.generate_auth_token()
-        return jsonify(token=token),200
+        return jsonify(token=token.decode('ascii')),200
     else:
         return jsonify(state="error token invalid"),401
     pass
@@ -129,7 +134,7 @@ def get_friends_user(id):
     token = datas.get('token','')
     me = User.verify_auth_token(token)
     if me is not None :
-        return users_schema.jsonify(me.friends),200
+        return users_schema.dumps(me.friends),200
     return jsonify(state="Current user not found"),403
 
 
@@ -185,5 +190,5 @@ def get_achievements_user():
     token = datas.get('token','')
     me = User.verify_auth_token(token)
     if me is not None :
-        return Success.successes_schema.jsonify(state="success", me.achievements),200
+        return successes_schema.dumps(me.achievements),200
     return jsonify(state="Current user not found"),403
