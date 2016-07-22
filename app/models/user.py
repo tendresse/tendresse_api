@@ -41,14 +41,13 @@ class User(db.Model):
     devices = db.relationship("Device",
                               backref=db.backref('user', lazy='joined')
     )
-    token = db.Column(db.String)
 
-    def generate_auth_token(self, expiration = 3600):
+    def generate_auth_token(self, expiration = 172800):
         s = Serializer(app.config['SECRET_KEY'], expires_in = expiration)
         return s.dumps({ 'id': self.id })
 
     @staticmethod
-    def verify_auth_token(token):
+    def get_user_by_token(token):
         s = Serializer(app.config['SECRET_KEY'])
         try:
             data = s.loads(token)
@@ -57,8 +56,18 @@ class User(db.Model):
         except BadSignature:
             return None # invalid token
         user = User.query.get(data['id'])
-        
         return user
+
+    @staticmethod
+    def verify_password(username_or_token, password):
+      # first try to authenticate by token
+      user = User.verify_auth_token(username_or_token)
+      if not user:
+          # try to authenticate with username/password
+          user = User.query.filter_by(username = username_or_token).first()
+          if not user or not user.verify_password(password):
+              return False
+      return user
 
     def __repr__(self):
         return 'User {}>'.format(self.id)

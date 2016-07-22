@@ -38,9 +38,7 @@ def signup_user():
                     u.devices.append(d)
                     db.session.commit()
                     token = u.generate_auth_token()
-                    u.token = token
-                    db.session.commit()
-                    return jsonify(state="success",token=token,username=username),200
+                    return jsonify(token=token,username=username),200
                 else:
                     # invalid password
                     return jsonify(login="password incorrect"),401
@@ -60,16 +58,43 @@ def login_user():
     datas = request.get_json()
     username = datas.get('username','')
     password = datas.get('password','').encode('utf-8')
-    user = User.query.get(username)
-    m = sha512()
-    m.update(f.password.data.encode())
-    password = m.hexdigest()
-    pass
+    if not username.isspace():
+        if not password.isspace():
+            me = User.query.filter(User.username == username).first()
+            if me is not None:
+                m = sha512()
+                m.update(f.password.data.encode())
+                password = m.hexdigest()
+                if password == me.password:
+                    token = me.generate_auth_token()
+                    return jsonify(token=token,username=username),200
+                else:
+                    return jsonify(login="password invalid"),403
+            else:
+                return jsonify(login="username not found"),404
+        else:
+            # invalid username
+            return jsonify(login="username incorrect"),401
+    else:
+        # invalid password
+        return jsonify(login="password incorrect"),401
 
+
+    pass
 
 @api.route('/users/me/disconnect', methods=['GET'])
 def disconnect_user():
     pass
+
+@api.route('/users/me/reset_token', methods=['GET'])
+def reset_token_user():
+    token = datas.get('token','')
+    me = User.get_user_by_token(token)
+    if me:
+        token = me.generate_auth_token()
+        return jsonify(token=token),200
+    else:
+        return jsonify(state="error token invalid"),401
 
 
 @api.route('/users/<int:id>', methods=['PUT'])
