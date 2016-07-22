@@ -104,6 +104,7 @@ def reset_token_user():
         return jsonify(token=token),200
     else:
         return jsonify(state="error token invalid"),401
+    pass
 
 
 @api.route('/users/<int:id>', methods=['PUT'])
