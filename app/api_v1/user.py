@@ -16,6 +16,15 @@ def get_users():
 def get_user(id):
     pass
 
+@api.route('/users/devices', methods=['GET'])
+def get_devices_by_user():
+    datas = request.get_json()
+    token = datas.get('token','')
+    me = User.verify_auth_token(token)
+    if me is not None :
+        return users_schema.jsonify(me.devices),200
+    return jsonify(state="Current user not found"),403
+
 
 @api.route('/users', methods=['POST'])
 def signup_user():
@@ -90,17 +99,43 @@ def submit_gif_user():
 
 @api.route('/users/me/friends', methods=['GET'])
 def get_friends_user(id):
-    pass
+    datas = request.get_json()
+    token = datas.get('token','')
+    me = User.verify_auth_token(token)
+    if me is not None :
+        return users_schema.jsonify(me.friends),200
+    return jsonify(state="Current user not found"),403
 
 
 @api.route('/users/me/friends', methods=['POST'])
 def add_friend_user():
-    pass
-
+    datas = request.get_json()
+    token = datas.get('token','')
+    username_friend = datas.get('username_friend','')
+    me = User.verify_auth_token(token)
+    friend = User.query.filter(User.username == username_friend).first()
+    if me is not None :
+        if friend not in me.friends:
+            me.friends.append(friend)
+            db.session.commit()
+            return jsonify(state="success",friends=user.friends),200
+        return jsonify(state="Friend already added"),401
+    return jsonify(state="Current user not found"),403
 
 @api.route('/users/me/friends', methods=['DELETE'])
-def unfriend_user(id):
-    pass
+def unfriend_user():
+    datas = request.get_json()
+    token = datas.get('token','')
+    username_friend = datas.get('username_friend','')
+    me = User.verify_auth_token(token)
+    friend = User.query.filter(User.username == username_friend).first()
+    if me is not None :
+        if friend in me.friends:
+            me.friends.remove(friend)
+            db.session.commit()
+            return jsonify(state="success"),200
+        return jsonify(state="User not in friends list"),401
+    return jsonify(state="Current user not found"),403
 
 
 # NOTIFICATIONS
@@ -119,5 +154,10 @@ def remove_notification_user(id):
 
 
 @api.route('/users/me/achievements', methods=['GET'])
-def get_achievements_user(id):
-    pass
+def get_achievements_user():
+    datas = request.get_json()
+    token = datas.get('token','')
+    me = User.verify_auth_token(token)
+    if me is not None :
+        return Success.successes_schema.jsonify(state="success", me.achievements),200
+    return jsonify(state="Current user not found"),403
