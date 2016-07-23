@@ -29,8 +29,9 @@ def authorized(fn):
             # Unauthorized
             abort(400)
             return None
-        print("the auth : "+request.headers['Authorization'])
-        user = User.get_user_by_token(request.headers['Authorization'])
+        data = request.headers['Authorization'].encode('ascii','ignore')
+        token = str.replace(str(data), 'Bearer ','')
+        user = User.get_user_by_token(token)
         if user is None:
             # Unauthorized
             abort(401)
