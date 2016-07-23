@@ -1,5 +1,6 @@
-from flask import jsonify, request, current_app
+from flask import jsonify, request, current_app, abort
 from hashlib import sha512
+from functools import wraps
 
 from . import api
 from .. import db
@@ -10,6 +11,34 @@ from ..models.success import Success
 from ..schemas.success import success_schema, successes_schema
 
 
+def authorized(fn):
+    """Decorator that checks that requests
+    contain an id-token in the request header.
+    user will be None if the
+    authentication failed, and have the User otherwise.
+
+    Usage:
+    @app.route("/")
+    @authorized
+    def secured_root(user=None):
+        pass
+    """
+    @wraps(fn)
+    def wrapped(*args, **kwargs):
+        if 'Authorization' not in request.headers:
+            # Unauthorized
+            abort(400)
+            return None
+        print("the auth : "+request.headers['Authorization'])
+        user = User.get_user_by_token(request.headers['Authorization'])
+        if user is None:
+            # Unauthorized
+            abort(401)
+            return None
+
+        return fn(user=user, *args, **kwargs)
+    return wrapped
+
 
 @api.route('/users', methods=['GET'])
 def get_users():
@@ -19,15 +48,6 @@ def get_users():
 @api.route('/users/<int:id>', methods=['GET'])
 def get_user(id):
     pass
-
-@api.route('/users/devices', methods=['GET'])
-def get_devices_by_user():
-    datas = request.get_json()
-    token = datas.get('token','')
-    me = User.get_user_by_token(token)
-    if me is not None :
-        return users_schema.jsonify(me.devices),200
-    return jsonify(state="Current user not found"),403
 
 
 @api.route('/users', methods=['POST'])
@@ -92,24 +112,16 @@ def login_user():
         # invalid password
         return jsonify(login="password incorrect"),401
 
-
-    pass
-
 @api.route('/users/me/disconnect', methods=['GET'])
 def disconnect_user():
     pass
 
-@api.route('/users/me/reset_token', methods=['PUT'])
-def reset_token_user():
-    datas = request.get_json()
-    token = datas.get('token','')
-    me = User.get_user_by_token(token)
-    if me:
-        token = me.generate_auth_token()
-        return jsonify(token=token.decode('ascii')),200
-    else:
-        return jsonify(state="error token invalid"),401
-    pass
+@api.route('/users/me/reset_token', methods=['GET'])
+@authorized
+def reset_token_user(user):
+    me = user
+    token = me.generate_auth_token()
+    return jsonify(token=token.decode('ascii')),200
 
 
 @api.route('/users/<int:id>', methods=['PUT'])
@@ -129,52 +141,44 @@ def submit_gif_user():
 
 
 @api.route('/users/me/friends', methods=['PUT'])
-def get_friends_user():
-    datas = request.get_json()
-    token = datas.get('token','')
-    me = User.get_user_by_token(token)
-    if me is not None :
-        return users_schema.jsonify(me.friends), 200
-    return jsonify(state="Current user not found"), 403
+@authorized
+def get_friends_user(user):
+    return users_schema.jsonify(user.friends), 200
 
 
 @api.route('/users/me/friends', methods=['POST'])
-def add_friend_user():
-    datas = request.get_json()
-    token = datas.get('token','')
+@authorized
+def add_friend_user(user):
+    me = user
     username_friend = datas.get('username_friend', '')
-    me = User.get_user_by_token(token)
     friend = User.query.filter(User.username == username_friend).first()
-    if me is not None :
-        if friend is not None:
-            if friend not in me.friends:
-                me.friends.append(friend)
-                db.session.commit()
-                return jsonify(state="success"), 200
-            return jsonify(state="Friend already added"), 401
-        return jsonify(state="Friend user not found"), 404
-    return jsonify(state="Current user not found"), 403
-
-@api.route('/users/me/friends', methods=['DELETE'])
-def unfriend_user():
-    datas = request.get_json()
-    token = datas.get('token','')
-    username_friend = datas.get('username_friend', '')
-    me = User.get_user_by_token(token)
-    friend = User.query.filter(User.username == username_friend).first()
-    if me is not None:
-        if friend in me.friends:
-            me.friends.remove(friend)
+    if friend is not None:
+        if friend not in me.friends:
+            me.friends.append(friend)
             db.session.commit()
             return jsonify(state="success"), 200
-        return jsonify(state="User not in friends list"), 401
-    return jsonify(state="Current user not found"), 403
+        return jsonify(state="Friend already added"), 401
+    return jsonify(state="Friend user not found"), 404
+
+
+@api.route('/users/me/friends', methods=['DELETE'])
+@authorized
+def unfriend_user(user):
+    me = user
+    username_friend = datas.get('username_friend', '')
+    friend = User.query.filter(User.username == username_friend).first()
+    if friend in me.friends:
+        me.friends.remove(friend)
+        db.session.commit()
+        return jsonify(state="success"), 200
+    return jsonify(state="User not in friends list"), 401
 
 
 # NOTIFICATIONS
 
 @api.route('/users/me/pending', methods=['GET'])
-def get_pending_gifs_user(id):
+@authorized
+def get_pending_gifs_user(user):
     pass
 
 
@@ -187,10 +191,6 @@ def remove_notification_user(id):
 
 
 @api.route('/users/me/achievements', methods=['GET'])
-def get_achievements_user():
-    datas = request.get_json()
-    token = datas.get('token','')
-    me = User.get_user_by_token(token)
-    if me is not None :
-        return successes_schema.dumps(me.achievements),200
-    return jsonify(state="Current user not found"),403
+@authorized
+def get_achievements_user(user):
+    return successes_schema.dumps(user.achievements),200
