@@ -16,7 +16,7 @@ class Success(db.Model):
     tags = db.relationship(
         "Tag",
         secondary=successwithtags,
-        backref=db.backref("achievements ", lazy="dynamic")
+        backref=db.backref("achievements", lazy="dynamic")
     )
     condition = db.Column(db.Integer)
     type_of = db.Column(db.String)

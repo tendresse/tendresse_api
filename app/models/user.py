@@ -2,8 +2,11 @@ from hashlib import sha512
 from flask import current_app
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
-from . import device, gif, success, tendresse
-from .. import db
+from .device import Device
+from .gif import Gif
+from .success import Success
+from .tendresse import Tendresse
+from .. import db, apns, gcm
 
 
 userwithuser = db.Table('userwithuser',
@@ -48,7 +51,12 @@ class User(db.Model):
         return s.dumps({ 'id': self.id })
 
     def notify(self):
-        pass
+        alert = "you've got a new tendresse"
+        for device in self.devices:
+          if device.platform == "android":
+            gcm.send(device.token,alert)
+          if device.platform == "ios":
+            apns.send(device.token,alert)
 
     def update_sender_achievements(self):
         sender_achievements = Success.query.filter(Success.type_of == "send").all()
