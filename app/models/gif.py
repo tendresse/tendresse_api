@@ -5,7 +5,7 @@ import random
 gifwithtags = db.Table('gifwithtags',
                       db.Column('gif_id', db.Integer, db.ForeignKey(
                           'gif.id'), primary_key=True),
-                      db.Column('tag_id', db.String, db.ForeignKey(
+                      db.Column('tag_id', db.Integer, db.ForeignKey(
                           'tag.id'), primary_key=True)
                       )
 
