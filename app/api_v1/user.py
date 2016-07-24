@@ -4,11 +4,15 @@ from functools import wraps
 
 from . import api
 from .. import db
-from ..models.user import User
 from ..models.device import Device
+from ..models.gif import Gif
+from ..schemas.gif import gif_schema, gifs_schema
+from ..models.user import User
 from ..schemas.user import user_schema, users_schema
 from ..models.success import Success
 from ..schemas.success import success_schema, successes_schema
+from ..models.tendresse import Tendresse
+from ..schemas.tendresse import tendresse_schema, tendresses_schema
 
 
 def authorized(fn):
@@ -29,8 +33,7 @@ def authorized(fn):
             # Unauthorized
             abort(400)
             return None
-        data = request.headers['Authorization'].encode('ascii','ignore')
-        token = str.replace(str(data), 'Bearer ','')
+        token = request.headers['Authorization'].encode('ascii','ignore')
         user = User.get_user_by_token(token)
         if user is None:
             # Unauthorized
@@ -46,9 +49,14 @@ def get_users():
     pass
 
 
-@api.route('/users/<int:id>', methods=['GET'])
-def get_user(id):
-    pass
+@api.route('/users/<string:username>', methods=['GET'])
+def get_user(username):
+    user = User.query.filter(User.username == username).first()
+    if user is not None:
+        return user_schema.jsonify(user),200
+    else:
+        return jsonify(state="user not found"),404
+
 
 
 @api.route('/users', methods=['POST'])
@@ -59,7 +67,7 @@ def signup_user():
         if len(username)>3:
             if User.query.filter(User.username == username).first() is None:
                 password = datas.get('password','').encode('utf-8')
-                if not password.isspace():
+                if not password.isspace() and len(password)>0:
                     m = sha512()
                     m.update(password)
                     password = m.hexdigest()
@@ -74,16 +82,12 @@ def signup_user():
                     token = u.generate_auth_token()
                     return jsonify(token=token.decode('ascii'),username=username),200
                 else:
-                    # invalid password
-                    return jsonify(login="password incorrect"),401
+                    return jsonify(state="password incorrect"),401
             else:
-                # username already taken
                 return jsonify(state="username already taken"),401
         else:
-            # username too short
             return jsonify(login="username too short, 4 characters minimum"),401
     else:
-        # invalid username
         return jsonify(login="username incorrect"),401
 
 
@@ -117,6 +121,7 @@ def login_user():
 def disconnect_user():
     pass
 
+
 @api.route('/users/me/reset_token', methods=['GET'])
 @authorized
 def reset_token_user(user):
@@ -134,14 +139,31 @@ def update_user(id):
 
 
 @api.route('/users/me/send', methods=['POST'])
-def submit_gif_user():
-    pass
+@authorized
+def submit_gif_user(user):
+    me = user
+    datas = request.get_json()
+    username_friend = datas.get('username_friend', '')
+    friend = User.query.filter(User.username == username_friend).first()
+    if friend is not None:
+        gif = Gif.get_random_gif()
+        t = Tendresse(sender_id = me.id, receiver_id = friend.id, gif_id = gif.id)
+        db.session.add(t)
+        db.session.commit()
+        # générer les notifications push
+        friend.notify()
+        # gérer les achievements
+        friend.update_receiver_achievements(gif)
+        user.update_sender_achievements()
+        return jsonify(state="success"),200
+    else:
+        return jsonify(state="friend not found"),404
 
 
 # FRIENDS
 
 
-@api.route('/users/me/friends', methods=['PUT'])
+@api.route('/users/me/friends', methods=['GET'])
 @authorized
 def get_friends_user(user):
     return users_schema.jsonify(user.friends), 200
@@ -151,6 +173,7 @@ def get_friends_user(user):
 @authorized
 def add_friend_user(user):
     me = user
+    datas = request.get_json()
     username_friend = datas.get('username_friend', '')
     friend = User.query.filter(User.username == username_friend).first()
     if friend is not None:
@@ -166,6 +189,7 @@ def add_friend_user(user):
 @authorized
 def unfriend_user(user):
     me = user
+    datas = request.get_json()
     username_friend = datas.get('username_friend', '')
     friend = User.query.filter(User.username == username_friend).first()
     if friend in me.friends:
@@ -177,15 +201,26 @@ def unfriend_user(user):
 
 # NOTIFICATIONS
 
+
 @api.route('/users/me/pending', methods=['GET'])
 @authorized
 def get_pending_gifs_user(user):
-    pass
+    pending_tendresses = [t for t in user.tendresses_received if not t.state_viewed]
+    return tendresses_schema.jsonify(pending_tendresses)
 
 
 @api.route('/users/me/pending', methods=['DELETE'])
-def remove_notification_user(id):
-    pass
+@authorized
+def state_tendresse_as_viewed(user):
+    datas = request.get_json()
+    tendresse_id = datas.get('tendresse_id', '')
+    tendresse = Tendresse.query.get(tendresse_id)
+    if tendresse is not None:
+        if tendresse.receiver is user:
+            tendresse.state_viewed = True
+            db.session.commit()
+        return jsonify(state="success"),200
+    return jsonify(state="tendresse not found"),404
 
 
 # ACHIEVEMENTS

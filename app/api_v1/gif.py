@@ -2,7 +2,7 @@ from flask import jsonify, request
 
 from . import api
 from .. import db
-from ..models.gif import Gif, get_random_gif
+from ..models.gif import Gif
 from ..schemas.gif import gif_schema, gifs_schema
 
 
@@ -13,7 +13,7 @@ def get_gifs():
 
 @api.route('/random', methods=['GET'])
 def get_random():
-    return gif_schema.jsonify(get_random_gif()),200 
+    return gif_schema.jsonify(Gif.get_random_gif()),200 
 
 @api.route('/gifs/<int:id>', methods=['GET'])
 def get_gif(id):

@@ -21,8 +21,11 @@ class Gif(db.Model):
     )
     lame_score = db.Column(db.Integer, default=0)
 
+
     def __repr__(self):
         return 'Gif {}>'.format(self.id)
 
-def get_random_gif():
-    return get_random_tag().gifs[0]
+
+    @staticmethod
+    def get_random_gif():
+        return get_random_tag().gifs[0]

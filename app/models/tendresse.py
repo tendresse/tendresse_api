@@ -2,9 +2,11 @@ from .. import db
 
 class Tendresse(db.Model):
 
-    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
-    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
-    gif_id = db.Column(db.Integer, db.ForeignKey('gif.id'), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    # Additional fields
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    gif_id = db.Column(db.Integer, db.ForeignKey('gif.id'), nullable=False)
     state_viewed = db.Column(db.Boolean, default=False)
     sender = db.relationship('User',
                               foreign_keys=[sender_id],

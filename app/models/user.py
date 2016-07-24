@@ -27,7 +27,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     # Additional fields
     username = db.Column(db.String, nullable=False, unique=True)
-    password = db.Column(db.String, nullable=True)
+    password = db.Column(db.String, nullable=False)
     friends = db.relationship('User',
                                secondary=userwithuser,
                                primaryjoin=(userwithuser.c.user1_id == id),
@@ -46,6 +46,26 @@ class User(db.Model):
     def generate_auth_token(self, expiration = 172800):
         s = Serializer(current_app.config.get('SECRET_KEY'), expires_in = expiration)
         return s.dumps({ 'id': self.id })
+
+    def notify(self):
+        pass
+
+    def update_sender_achievements(self):
+        sender_achievements = Success.query.filter(Success.type_of == "send").all()
+        for achievement in sender_achievements:
+          if achievement not in sefl.achievements:
+            if len(self.tendresses_sent) >= achievement.condition:
+              self.achievements.append(achievement)
+        db.session.commit()
+
+    def update_receiver_achievements(self,gif):
+        for gif_tag in gif.tags:
+          for achievement in gif_tag.achievements:
+            if achievement not in self.achievements:
+              matching_tendresses = [t for t in self.tendresses_received if t.matches_any(achievement.tags)]
+              if len(matching_tendresses) >= achievement.condition:
+                self.achievements.append(achievement)
+        db.session.commit()
 
     @staticmethod
     def get_user_by_token(token):
