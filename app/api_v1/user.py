@@ -49,10 +49,6 @@ def get_users():
     return jsonify(state="online"),200
 
 
-@api.route('/users', methods=['GET'])
-def get_users():
-    pass
-
 
 @api.route('/users/<string:username>/profile', methods=['GET'])
 def get_user(username):
