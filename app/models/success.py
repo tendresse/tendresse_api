@@ -3,7 +3,7 @@ from .. import db
 successwithtags = db.Table('successwithtags',
                     db.Column('success_id', db.Integer, db.ForeignKey(
                         'success.id'), primary_key=True),
-                    db.Column('tag_id', db.String, db.ForeignKey(
+                    db.Column('tag_id', db.Integer, db.ForeignKey(
                         'tag.id'), primary_key=True)
                   )
 
