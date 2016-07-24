@@ -49,13 +49,12 @@ def get_users():
     pass
 
 
-@api.route('/users/<string:username>', methods=['GET'])
+@api.route('/users/<string:username>/profile', methods=['GET'])
 def get_user(username):
     user = User.query.filter(User.username == username).first()
     if user is not None:
         return user_schema.jsonify(user),200
-    else:
-        return jsonify(state="user not found"),404
+    return jsonify(state="user not found"),404
 
 
 
@@ -71,13 +70,14 @@ def signup_user():
                     m = sha512()
                     m.update(password)
                     password = m.hexdigest()
-                    device_token = datas.get('device_token','')
-                    platform = datas.get('platform','')
-                    d = Device(token=device_token,platform=platform)
                     u = User(username=username,password=password)
                     db.session.add(u)
-                    db.session.add(d)
-                    u.devices.append(d)
+                    device_token = datas.get('device_token','')
+                    if device_token!='':
+                        platform = datas.get('platform','')
+                        d = Device(token=device_token,platform=platform)
+                        db.session.add(d)
+                        u.devices.append(d)
                     db.session.commit()
                     token = u.generate_auth_token()
                     return jsonify(token=token.decode('ascii'),username=username),200
