@@ -44,6 +44,11 @@ def authorized(fn):
     return wrapped
 
 
+@api.route('/', methods=['GET'])
+def get_users():
+    return jsonify(state="online"),200
+
+
 @api.route('/users', methods=['GET'])
 def get_users():
     pass
