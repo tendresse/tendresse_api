@@ -111,14 +111,15 @@ def populateachievementsfromfile(filename):
     for achievement in achievements:
         s = Success(title=achievement["title"], type_of=achievement["type_of"], condition=achievement["condition"], icon=achievement["icon"])
         db.session.add(s)
-        for tag in achievement["tags"]:
-                t = Tag.query.get(tag)
-                if t is None:
-                    o = Tag(name=tag)
-                    db.session.add(o)
-                    db.session.commit()
-                    t = o
-                s.tags.append(t)
+        if achievement["type_of"] == "receive":
+            for tag in achievement["tags"]:
+                    t = Tag.query.filter(Tag.name==tag).first()
+                    if t is None:
+                        o = Tag(name=tag)
+                        db.session.add(o)
+                        db.session.commit()
+                        t = o
+                    s.tags.append(t)
     db.session.commit()
     
 if __name__ == '__main__':
