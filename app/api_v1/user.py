@@ -128,7 +128,7 @@ def disconnect_user():
 def reset_token_user(user):
     me = user
     token = me.generate_auth_token()
-    return jsonify(token=token.decode('ascii')),200
+    return jsonify(token=token.decode('ascii'),username=me.username),200
 
 
 @api.route('/users/<int:id>', methods=['PUT'])
