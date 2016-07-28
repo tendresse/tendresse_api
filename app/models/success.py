@@ -12,7 +12,6 @@ class Success(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     # Additional fields
     title = db.Column(db.String, unique=True )
-    description = db.Column(db.String, unique=True )
     tags = db.relationship(
         "Tag",
         secondary=successwithtags,
