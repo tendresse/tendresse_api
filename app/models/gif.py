@@ -28,4 +28,7 @@ class Gif(db.Model):
 
     @staticmethod
     def get_random_gif():
-        return db.session.query(Gif).join(Gif.tags).filter(Tag.id==Tag.get_random_tag().id).order_by(func.random()).first()
+        gif = db.session.query(Gif).join(Gif.tags).filter(Tag.id==Tag.get_random_tag().id).order_by(func.random()).first()
+        if gif is not None:
+          return gif
+        return Gif.get_random_gif()
