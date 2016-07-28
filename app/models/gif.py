@@ -1,6 +1,6 @@
 from .. import db
 from .tag import Tag
-import random
+from sqlalchemy.sql.expression import func
 
 gifwithtags = db.Table('gifwithtags',
                       db.Column('gif_id', db.Integer, db.ForeignKey(
@@ -28,6 +28,4 @@ class Gif(db.Model):
 
     @staticmethod
     def get_random_gif():
-        t = Tag.get_random_tag()
-        gifs = Gif.query.filter_by(Gif.tags.any(Tag.id==t.id)).all()
-        return random.choice(gifs)
+        return session.query(Gif).join(Gif.tags).filter(Tag.id==Tag.get_random_tag().id).order_by(func.random()).first()
