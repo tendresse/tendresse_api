@@ -29,6 +29,5 @@ class Gif(db.Model):
     @staticmethod
     def get_random_gif():
         t = Tag.get_random_tag()
-        from random import randrange
-        random_index = randrange(0,len(t.gifs))
-        return t.gifs[random_index]
+        gifs = Gif.query.filter_by(Gif.tags.any(Tag.id==t.id)).all()
+        return random.choice(gifs)
