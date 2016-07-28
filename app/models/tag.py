@@ -11,5 +11,6 @@ class Tag(db.Model):
     def __repr__(self):
         return 'Tag {}>'.format(self.id)
 
-def get_random_tag():
-    return db.session.query(Tag).order_by(func.random()).first()
+    @staticmethod
+    def get_random_tag():
+        return db.session.query(Tag).order_by(func.random()).first()
