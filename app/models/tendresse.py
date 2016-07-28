@@ -25,6 +25,6 @@ class Tendresse(db.Model):
     
     def matches_any(self,tags):
       for tag in tags:
-        if tag in self.tags:
+        if tag in self.gif.tags:
           return True
       return False
