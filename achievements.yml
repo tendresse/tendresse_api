@@ -367,6 +367,6 @@
   icon: "greyjoy"
 - title: "Thunderstruck"
   type_of: "receive"
-  condition: 100
+  condition: 99
   tags : ["dildo"]
   icon: "thunderstruck"
