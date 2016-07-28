@@ -177,7 +177,7 @@ def add_friend_user(user):
     datas = request.get_json()
     username_friend = datas.get('username_friend', '')
     friend = User.query.filter(User.username == username_friend).first()
-    if friend is not None:
+    if friend is not None and friend is not me:
         if friend not in me.friends:
             me.friends.append(friend)
             db.session.commit()
