@@ -22,3 +22,9 @@ class Tendresse(db.Model):
                               )
     gif = db.relationship('Gif',
                           backref=db.backref("tendresses",lazy='dynamic'))
+    
+    def matches_any(self,tags):
+      for tag in tags:
+        if tag in self.tags:
+          return True
+      return False
