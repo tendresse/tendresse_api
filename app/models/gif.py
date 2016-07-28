@@ -28,4 +28,4 @@ class Gif(db.Model):
 
     @staticmethod
     def get_random_gif():
-        return session.query(Gif).join(Gif.tags).filter(Tag.id==Tag.get_random_tag().id).order_by(func.random()).first()
+        return db.session.query(Gif).join(Gif.tags).filter(Tag.id==Tag.get_random_tag().id).order_by(func.random()).first()
