@@ -61,8 +61,8 @@ class User(db.Model):
     def update_sender_achievements(self):
         sender_achievements = Success.query.filter(Success.type_of == "send").all()
         for achievement in sender_achievements:
-          if achievement not in sefl.achievements:
-            if len(self.tendresses_sent) >= achievement.condition:
+          if achievement not in self.achievements:
+            if len([k for k in self.tendresses_sent]) >= achievement.condition:
               self.achievements.append(achievement)
         db.session.commit()
 
@@ -71,7 +71,7 @@ class User(db.Model):
           for achievement in gif_tag.achievements:
             if achievement not in self.achievements:
               matching_tendresses = [t for t in self.tendresses_received if t.matches_any(achievement.tags)]
-              if len(matching_tendresses) >= achievement.condition:
+              if len([k for k in matching_tendresses]) >= achievement.condition:
                 self.achievements.append(achievement)
         db.session.commit()
 
