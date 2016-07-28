@@ -1,5 +1,5 @@
 from .. import db
-from .tag import Tag, get_random_tag
+from .tag import Tag
 import random
 
 gifwithtags = db.Table('gifwithtags',
@@ -28,4 +28,7 @@ class Gif(db.Model):
 
     @staticmethod
     def get_random_gif():
-        return get_random_tag().gifs[0]
+        t = Tag.get_random_tag()
+        from random import randrange
+        random_index = randrange(0,len(t.gifs))
+        return t.gifs[random_index]
