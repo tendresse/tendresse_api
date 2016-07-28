@@ -36,7 +36,7 @@ def populatedb():
     time_start_global = time.time()
     blogs = yaml.load(open("blogs.yml"))
     known_tags = {}
-    avoided_tags = ["the","sexy","fucking","porn","gif","sex","sexe","xxx","scene","pr0n","fuck","huge","porno","gifs","pornstar","erotic","nsfw","naughty","horny","hot","a","an"]
+    avoided_tags = ["by","tumblr","star","famous","the","sexy","fucking","porn","gif","sex","sexe","xxx","scene","pr0n","fuck","huge","porno","gifs","pornstar","erotic","nsfw","naughty","horny","hot","a","an"]
     tumblr_key = 'Gm7u68GMu8RCQmIVV1vmr7QlToZ8rYKrzr1HsULlmK0doez73o'
     http = urllib3.PoolManager()
     for blog_url in blogs:
@@ -64,8 +64,9 @@ def populatedb():
                                     # so we need to split this string ang get a list of tags
                                     l_tag = l_tag.split(' ')
                                     for tag in l_tag:
+                                        tag = tag.lower()
                                         if not tag.isspace():
-                                            if tag not in avoided_tags:
+                                            if tag not in avoided_tags and len(tag)>2:
                                                     if tag not in known_tags :
                                                         o = Tag(name=tag)
                                                         db.session.add(o)
@@ -83,7 +84,7 @@ def populatedb():
 
 
 @manager.command
-def populatedbfromfile(filename):
+def populategifsfromfile(filename):
     '''Populate db with gifs/tags from yaml file'''
     gifs = yaml.load(open(filename))
     avoided_tags = ["the","sexy","fucking","porn","gif","sex","sexe","xxx","scene","pr0n","fuck","huge","porno","gifs","pornstar","erotic","nsfw","naughty","horny","hot","a","an"]
@@ -91,6 +92,7 @@ def populatedbfromfile(filename):
         g = Gif(url=gif["url"])
         db.session.add(g)
         for tag in gif["tags"]:
+            tag = tag.lower()
             if tag not in avoided_tags:
                 t = Tag.query.get(tag)
                 if t is None:
@@ -102,6 +104,22 @@ def populatedbfromfile(filename):
                     g.tags.append(t)
         db.session.commit()
         
-
+@manager.command
+def populateachievementsfromfile(filename):
+    '''Populate db with gifs/tags from yaml file'''
+    achievements = yaml.load(open(filename))
+    for achievement in achievements:
+        s = Success(title=achievement["title"], type_of=achievement["type_of"], condition=achievement["condition"], icon=achievement["icon"])
+        db.session.add(s)
+        for tag in achievement["tags"]:
+                t = Tag.query.get(tag)
+                if t is None:
+                    o = Tag(name=tag)
+                    db.session.add(o)
+                    db.session.commit()
+                    t = o
+                s.tags.append(t)
+    db.session.commit()
+    
 if __name__ == '__main__':
     manager.run()
