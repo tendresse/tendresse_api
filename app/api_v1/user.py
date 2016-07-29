@@ -52,7 +52,7 @@ def get_users():
 
 @api.route('/users/<string:username>/profile', methods=['GET'])
 def get_user(username):
-    user = User.query.filter(User.username == username).first()
+    user = User.query.filter(User.username == username.lower()).first()
     if user is not None:
         return user_schema.jsonify(user),200
     return jsonify(state="user not found"),404
@@ -62,7 +62,7 @@ def get_user(username):
 @api.route('/users', methods=['POST'])
 def signup_user():
     datas = request.get_json()
-    username = datas.get('username','')
+    username = datas.get('username','').lower()
     if not username.isspace():
         if len(username)>3:
             if User.query.filter(User.username == username).first() is None:
@@ -95,7 +95,7 @@ def signup_user():
 @api.route('/users', methods=['PUT'])
 def login_user():
     datas = request.get_json()
-    username = datas.get('username','')
+    username = datas.get('username','').lower()
     password = datas.get('password','').encode('utf-8')
     if not username.isspace():
         if not password.isspace():
@@ -144,7 +144,7 @@ def update_user(id):
 def submit_gif_user(user):
     me = user
     datas = request.get_json()
-    username_friend = datas.get('username_friend', '')
+    username_friend = datas.get('username_friend', '').lower()
     friend = User.query.filter(User.username == username_friend).first()
     if friend is not None:
         gif = Gif.get_random_gif()
@@ -175,7 +175,7 @@ def get_friends_user(user):
 def add_friend_user(user):
     me = user
     datas = request.get_json()
-    username_friend = datas.get('username_friend', '')
+    username_friend = datas.get('username_friend', '').lower()
     friend = User.query.filter(User.username == username_friend).first()
     if friend is not None and friend is not me:
         if friend not in me.friends:
@@ -191,7 +191,7 @@ def add_friend_user(user):
 def unfriend_user(user):
     me = user
     datas = request.get_json()
-    username_friend = datas.get('username_friend', '')
+    username_friend = datas.get('username_friend', '').lower()
     friend = User.query.filter(User.username == username_friend).first()
     if friend in me.friends:
         me.friends.remove(friend)
