@@ -29,6 +29,15 @@ def createdb():
 def dropdb():
     '''Creates db tables.'''
     db.drop_all()
+    
+@manager.command
+def lowerusernames():
+    '''lower all usernames'''
+    from app.models.user import User
+    users = User.query.all()
+    for user in users:
+        user.username = user.username.lower()
+    db.session.commit()
 
 @manager.command
 def populatedb():
