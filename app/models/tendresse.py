@@ -22,9 +22,16 @@ class Tendresse(db.Model):
                               )
     gif = db.relationship('Gif',
                           backref=db.backref("tendresses",lazy='dynamic'))
-    
+
     def matches_any(self,tags):
       for tag in tags:
         if tag in self.gif.tags:
           return True
       return False
+
+    def serialize(self):
+        d = {}
+        d["id"]=self.id
+        d["sender"]=self.sender.username
+        d["gif"]=self.gif.url
+        return d

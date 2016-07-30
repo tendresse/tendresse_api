@@ -2,11 +2,11 @@ from hashlib import sha512
 from flask import current_app
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
-from .device import Device
 from .gif import Gif
 from .success import Success
 from .tendresse import Tendresse
-from .. import db, apns, gcm
+from .. import db
+import requests
 
 
 userwithuser = db.Table('userwithuser',
@@ -42,21 +42,30 @@ class User(db.Model):
                                     secondary=userwithsuccess,
                                     backref=db.backref("users", lazy="dynamic")
     )
-    devices = db.relationship("Device",
-                              backref=db.backref('user', lazy='joined')
-    )
+    device = db.Column(db.String)
+    role = db.Column(db.String)
 
     def generate_auth_token(self, expiration = 172800):
         s = Serializer(current_app.config.get('SECRET_KEY'), expires_in = expiration)
         return s.dumps({ 'id': self.id })
 
-    def notify(self):
-        alert = "you've got a new tendresse"
-        for device in self.devices:
-          if device.platform == "android":
-            gcm.send(device.token,alert)
-          if device.platform == "ios":
-            apns.send(device.token,alert)
+    def notify(self, username):
+        if self.device != '':
+            data = dict()
+            data["tokens"] = [self.device]
+            data["profile"] = "app"
+            data["notification"] = dict()
+            data["notification"]["title"] = "new tendresse"
+            data["notification"]["message"] = "new tendresse"
+            data["notification"]["android"] = dict()
+            data["notification"]["android"]["title"] = "new tendresse from "+username
+            data["notification"]["android"]["message"] = "launch the app to see it !"
+            data["notification"]["ios"] = dict ()
+            data["notification"]["ios"]["title"] = "new tendresse from "+username
+            data["notification"]["ios"]["message"] = "launch the app to see it !"
+            ionic = current_app.config.get('IONIC_API_TOKEN')
+            headers = {"Authorization":"Bearer "+ionic,"Content-Type": "application/json"}
+            requests.post("https://api.ionic.io/push/notifications",data=data,headers=headers)
 
     def update_sender_achievements(self):
         sender_achievements = Success.query.filter(Success.type_of == "send").all()

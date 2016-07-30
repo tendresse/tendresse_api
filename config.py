@@ -7,8 +7,8 @@ class Config(object):
     DEBUG = False
     TESTING = False
     SECRET_KEY = os.environ.get('SECRET_KEY',str(uuid.uuid4()))
-    APNS_CERTIFICATE = os.environ.get('APNS_CERTIFICATE','')
-    GCM_API_KEY = os.environ.get('GCM_API_KEY','')
+    IONIC_API_TOKEN = os.environ.get('IONIC_API_TOKEN','')
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
 class ProductionConfig(Config):

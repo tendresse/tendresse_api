@@ -4,7 +4,6 @@ from functools import wraps
 
 from . import api
 from .. import db
-from ..models.device import Device
 from ..models.gif import Gif
 from ..schemas.gif import gif_schema, gifs_schema
 from ..models.user import User
@@ -95,11 +94,11 @@ def signup_user():
 @api.route('/users', methods=['PUT'])
 def login_user():
     datas = request.get_json()
-    username = datas.get('username','').lower()
+    username = datas.get('username','')
     password = datas.get('password','').encode('utf-8')
     if not username.isspace():
         if not password.isspace():
-            me = User.query.filter(User.username == username).first()
+            me = User.query.filter(User.username == username.lower()).first()
             if me is not None:
                 m = sha512()
                 m.update(password)
@@ -108,7 +107,7 @@ def login_user():
                     token = me.generate_auth_token()
                     return jsonify(token=token.decode('ascii'),username=username),200
                 else:
-                    return jsonify(login="password invalid"),403
+                    return jsonify(login="password invalid"),401
             else:
                 return jsonify(login="username not found"),404
         else:
@@ -131,9 +130,17 @@ def reset_token_user(user):
     return jsonify(token=token.decode('ascii'),username=me.username),200
 
 
-@api.route('/users/<int:id>', methods=['PUT'])
-def update_user(id):
-    pass
+@api.route('/users/me/device', methods=['PUT'])
+@authorized
+def update_device_user(user):
+    me = user
+    datas = request.get_json()
+    device_token = datas.get('device_token','')
+    if device_token != '':
+        me.device = device_token
+        db.session.commit()
+        return jsonify(state="success"),200
+    return jsonify(state="token invalid"),404
 
 
 # SEND GIF
@@ -144,15 +151,15 @@ def update_user(id):
 def submit_gif_user(user):
     me = user
     datas = request.get_json()
-    username_friend = datas.get('username_friend', '').lower()
-    friend = User.query.filter(User.username == username_friend).first()
+    username_friend = datas.get('username_friend', '')
+    friend = User.query.filter(User.username == username_friend.lower()).first()
     if friend is not None:
         gif = Gif.get_random_gif()
         t = Tendresse(sender_id = me.id, receiver_id = friend.id, gif_id = gif.id)
         db.session.add(t)
         db.session.commit()
         # générer les notifications push
-        friend.notify()
+        friend.notify(friend.username)
         # gérer les achievements
         friend.update_receiver_achievements(gif)
         user.update_sender_achievements()
@@ -182,7 +189,7 @@ def add_friend_user(user):
             me.friends.append(friend)
             db.session.commit()
             return jsonify(state="success"), 200
-        return jsonify(state="Friend already added"), 401
+        return jsonify(state="Friend already added"), 404
     return jsonify(state="Friend user not found"), 404
 
 
@@ -197,7 +204,7 @@ def unfriend_user(user):
         me.friends.remove(friend)
         db.session.commit()
         return jsonify(state="success"), 200
-    return jsonify(state="User not in friends list"), 401
+    return jsonify(state="User not in friends list"), 404
 
 
 # NOTIFICATIONS
@@ -206,8 +213,17 @@ def unfriend_user(user):
 @api.route('/users/me/pending', methods=['GET'])
 @authorized
 def get_pending_gifs_user(user):
+    me = user
     pending_tendresses = [t for t in user.tendresses_received if not t.state_viewed]
-    return tendresses_schema.jsonify(pending_tendresses)
+    tendresses_by_user = {}
+    for tendresse in pending_tendresses:
+        if tendresse.sender.username in tendresses_by_user:
+            tendresses_by_user[tendresse.sender.username]["tendresses"].append(tendresse.serialize())
+        else:
+            tendresses_by_user[tendresse.sender.username]= {}
+            tendresses_by_user[tendresse.sender.username]["isFriend"] = tendresse.sender in me.friends
+            tendresses_by_user[tendresse.sender.username]["tendresses"] = [tendresse.serialize()]
+    return jsonify(tendresses_by_user)
 
 
 @api.route('/users/me/pending', methods=['DELETE'])
