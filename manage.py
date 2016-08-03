@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import os, yaml, urllib3, json, time
+from flask_socketio import SocketIO
 urllib3.disable_warnings() # disable unverified HTTPS warning
 
 from flask_script import Manager
@@ -9,7 +10,7 @@ from app.models.gif import Gif
 from app.models.success import Success
 from app.models.tag import Tag
 
-from app import create_app, db
+from app import create_app, db, socketio
 
 app = create_app(os.getenv('APP_CONFIG', 'default'))
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -19,6 +20,9 @@ manager = Manager(app)
 def make_shell_context():
     return dict(app=app, db=db)
 
+@manager.command
+def run():
+    socketio.run(app,logger=True, engineio_logger=True)
 
 @manager.command
 def createdb():
