@@ -1,28 +1,29 @@
 from .. import db
 
-successwithtags = db.Table('successwithtags',
-                    db.Column('success_id', db.Integer, db.ForeignKey(
-                        'success.id'), primary_key=True),
+achievementwithtags = db.Table('achievementwithtags',
+                    db.Column('achievement_id', db.Integer, db.ForeignKey(
+                        'achievement.id'), primary_key=True),
                     db.Column('tag_id', db.Integer, db.ForeignKey(
                         'tag.id'), primary_key=True)
                   )
 
-class Success(db.Model):
+class Achievement(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     # Additional fields
+    condition = db.Column(db.Integer)
+    icon = db.Column(db.Text)
     title = db.Column(db.String, unique=True )
+    type_of = db.Column(db.String)
+    xp = db.Column(db.Integer)
+    # backrefs
     tags = db.relationship(
         "Tag",
-        secondary=successwithtags,
+        secondary=achievementwithtags,
         backref=db.backref("achievements", lazy="dynamic")
     )
-    condition = db.Column(db.Integer)
-    type_of = db.Column(db.String)
-    icon = db.Column(db.String)
-
     def __repr__(self):
-        return 'Success {}>'.format(self.id)
+        return 'Achievement {}>'.format(self.id)
 
     def matches_any(self,tags):
       for tag in tags:

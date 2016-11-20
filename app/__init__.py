@@ -1,23 +1,30 @@
 from flask import Flask
+from flask_socketio import SocketIO
 from flask_marshmallow import Marshmallow
 from flask_sqlalchemy import SQLAlchemy
-from config import config
-from flask_socketio import SocketIO
-from flask_cors import CORS, cross_origin
+import os, logging, sys, uuid
 
 db = SQLAlchemy()
 ma = Marshmallow()
 socketio = SocketIO()
 
-def create_app(config_name):
+def create_app(debug=False):
+    """Create an application."""
     app = Flask(__name__)
-    app.config.from_object(config[config_name])
+    app.debug = debug
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY',str(uuid.uuid4()))
+    app.config['IONIC_API_TOKEN'] = os.environ.get('IONIC_API_TOKEN','')
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
+        'DATABASE_URI'
+    )
 
     db.init_app(app)
     ma.init_app(app)
-    CORS(app)
-    
-    from .api_v1 import api as api_v1_blueprint
-    app.register_blueprint(api_v1_blueprint, url_prefix='/api/v1')
-    print('running the app')
+
+    from .main import main as main_blueprint
+    app.register_blueprint(main_blueprint)
+
+    socketio.init_app(app)
     return app
+

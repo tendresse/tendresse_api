@@ -1,9 +1,9 @@
 #! /usr/bin/env python
-import os
 from flask_socketio import SocketIO
 from app import create_app
 
-app = create_app(os.getenv('APP_CONFIG', 'default'))
-socketio = SocketIO(app)
+app = create_app()
+socketio = SocketIO(app, async_mode=None)
+
 if __name__ == '__main__':
-    socketio.run(app)
+    socketio.run(app, debug=True)

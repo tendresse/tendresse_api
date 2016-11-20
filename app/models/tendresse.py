@@ -4,10 +4,13 @@ class Tendresse(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     # Additional fields
-    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     gif_id = db.Column(db.Integer, db.ForeignKey('gif.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     state_viewed = db.Column(db.Boolean, default=False)
+    # backrefs
+    gif = db.relationship('Gif',
+                          backref=db.backref("tendresses",lazy='dynamic'))
     sender = db.relationship('User',
                               foreign_keys=[sender_id],
                               backref=db.backref("tendresses_sent",
@@ -20,8 +23,6 @@ class Tendresse(db.Model):
                                 remote_side=[receiver_id],
                                 lazy='dynamic')
                               )
-    gif = db.relationship('Gif',
-                          backref=db.backref("tendresses",lazy='dynamic'))
 
     def matches_any(self,tags):
       for tag in tags:
