@@ -14,10 +14,10 @@ def create_app(debug=False):
     app.debug = debug
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY',str(uuid.uuid4()))
     app.config['IONIC_API_TOKEN'] = os.environ.get('IONIC_API_TOKEN','')
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
         'DATABASE_URI'
     )
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
     ma.init_app(app)
