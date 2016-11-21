@@ -166,18 +166,15 @@ def ready():
 def get_user(username):
     user = User.query.filter(User.username == username.lower()).first()
     if user is not None:
-        return user_schema.jsonify(user)
-    return False
+        return return jsonify(success=True, user=user_schema.jsonify(user))
+    return jsonify(success=False, error="user not found")
 
 
 @socketio.on('update device')
 @authorized
 def update_device(device_token):
-    if current_user is not None:
-        current_user.device = device_token
-        db.session.commit()
-        return True
-    return False
+    current_user.device = device_token
+    db.session.commit()
 
 
 #############
@@ -209,8 +206,25 @@ def send_tendresse(username_friend):
             for a in ach:
                 emit('new achievement', success_schema.jsonify(a))
         emit('new tendresse', t.serialize(), room=friend.username)
-        return True
-    return False
+        return jsonify(success=True)
+    return jsonify(success=False, error="friend not found")
+
+
+@socketio.on('send custom tendresse')
+@authorized
+def send_custom_tendresse(username_friend, gif_id, message):
+    friend = User.query.filter(
+        User.username == username_friend.lower()).first()
+    if friend is not None:
+        t = Tendresse(sender_id=current_user.id,
+                      receiver_id=friend.id, gif_id=gif_id, message=message)
+        db.session.add(t)
+        db.session.commit()
+        # générer les notifications push
+        friend.notify(friend.username)
+        emit('new tendresse', t.serialize(), room=friend.username)
+        return jsonify(success=True)
+    return jsonify(success=False, error="friend not found")
 
 
 @socketio.on('tendresse seen')
@@ -221,8 +235,9 @@ def tendresse_seen(tendresse_id):
         if tendresse.receiver is current_user:
             tendresse.state_viewed = True
             db.session.commit()
-            return True
-
+            return jsonify(success=True)
+        return jsonify(success=False, error="tendresse does not belong to you")
+    return jsonify(success=False, error="tendresse not found")
 
 ##########
 # FRIEND
@@ -343,7 +358,7 @@ def add_blog(blog):
                             db.session.commit()
         return jsonify(success=True)
     else:
-        return jsonify(success=True, error="blog invalid or offline")
+        return jsonify(success=False, error="blog invalid or offline")
 
 
 @socketio.on('delete blog')
@@ -352,7 +367,9 @@ def delete_blog(blog_id):
     blog = Blog.query.get(blog_id)
     if blog is not None:
         db.session.delete(blog)
-    db.session.commit()
+        db.session.commit()
+        return jsonify(success=True)
+    return jsonify(success=False, error="blog not found")
 
 
 #######
@@ -400,7 +417,7 @@ def update_tag(tag):
         db.session.add(tag)
         db.session.commit()
         return jsonify(success=True)
-    return jsonify(success=False, error="tag don't exists")
+    return jsonify(success=False, error="tag not found")
 
 
 @socketio.on('delete tag')
@@ -409,8 +426,9 @@ def delete_tag(tag_id):
     tag = Tag.query.get(tag_id)
     if tag is not None:
         db.session.delete(tag)
-    db.session.commit()
-
+        db.session.commit()
+        return jsonify(success=True)
+    return jsonify(success=False, error="tag not found")
 
 #######
 # GIF
@@ -473,7 +491,7 @@ def update_gif(gif):
         gif.tags = scheme.data.tags
         db.session.commit()
         return jsonify(success=True)
-    return jsonify(success=False, error="gif doesn't exist")
+    return jsonify(success=False, error="gif not found")
 
 
 @socketio.on('delete gif')
@@ -482,8 +500,9 @@ def delete_gif(gif_id):
     gif = Gif.query.get(gif_id)
     if gif is not None:
         db.session.delete(gif)
-    db.session.commit()
-
+        db.session.commit()
+        return jsonify(success=True)
+    return jsonify(success=False, error="gif not found")
 
 ###############
 # ACHIEVEMENT
@@ -551,3 +570,21 @@ def delete_achievement(achievement_id):
         db.session.commit()
         return jsonify(success=True)
     return jsonify(success=False, error="achievement doest not exist")
+
+
+#########
+# STORE
+#########
+
+
+@socketio.on('buy loves')
+@authorized
+def buy_loves(username_friend):
+    pass
+
+
+@socketio.on('buy 10 loves')
+@authorized
+def buy_loves_2(username_friend):
+    pass
+

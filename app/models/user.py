@@ -23,12 +23,20 @@ userwithachievement = db.Table('userwithachievement',
                                'achievement.id'), primary_key=True)
                            )
 
+userwithtagsbanned = db.Table('userwithtagsbanned',
+                           db.Column('user_id', db.Integer, db.ForeignKey(
+                               'user.id'), primary_key=True),
+                           db.Column('tag_id', db.Integer, db.ForeignKey(
+                               'tag.id'), primary_key=True)
+                           )
+
 
 class User(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     # Additional fields
     device = db.Column(db.String)
+    loves = db.Column(db.Integer, default=0)
     nsfw = db.Column(db.Boolean, default=False)
     password = db.Column(db.String, nullable=False)
     premium = db.Column(db.Boolean, default=False)
@@ -48,6 +56,10 @@ class User(db.Model):
                                   'friended_by', lazy='dynamic'),
                               lazy='dynamic'
                               )
+    tags_banned = db.relationship("Tag",
+                                   secondary=userwithtagsbanned,
+                                   backref=db.backref("banned_by_users", lazy="dynamic")
+                                   )
 
     def generate_auth_token(self, expiration=172800):
         s = Serializer(current_app.config.get('SECRET_KEY'))
@@ -101,6 +113,10 @@ class User(db.Model):
                         ach.append(achievement)
         db.session.commit()
         return ach
+
+    def add_loves(self, loves):
+        self.loves += loves
+        db.session.commit()
 
     @staticmethod
     def get_user_by_token(token):

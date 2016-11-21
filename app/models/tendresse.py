@@ -5,6 +5,7 @@ class Tendresse(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     # Additional fields
     gif_id = db.Column(db.Integer, db.ForeignKey('gif.id'), nullable=False)
+    message = db.Column(db.String, default='')
     receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     state_viewed = db.Column(db.Boolean, default=False)
@@ -35,4 +36,6 @@ class Tendresse(db.Model):
         d["id"]=self.id
         d["sender"]=self.sender.username
         d["gif"]=self.gif.url
+        if self.message is not '':
+          d["message"]=self.message
         return d
